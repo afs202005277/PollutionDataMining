@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from scipy.stats import describe
 from sklearn.model_selection import train_test_split, GridSearchCV, KFold
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -17,13 +18,56 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Load dataset
-data = pd.read_csv('heart.csv')  # Replace with your CSV file path
+def convert_integer_columns(df):
+    # Iterate through each column in the DataFrame
+    for col in df.select_dtypes(include=['int']):
+        # Get the minimum and maximum values of the column
+        min_val = df[col].min()
+        max_val = df[col].max()
 
-# Assume the last column is the target
-X = data.iloc[:, :-1].values
-y = data.iloc[:, -1].values
+        # Determine the appropriate integer type
+        if min_val >= np.iinfo(np.int8).min and max_val <= np.iinfo(np.int8).max:
+            df[col] = df[col].astype(np.int8)
+        elif min_val >= np.iinfo(np.int16).min and max_val <= np.iinfo(np.int16).max:
+            df[col] = df[col].astype(np.int16)
+        elif min_val >= np.iinfo(np.int32).min and max_val <= np.iinfo(np.int32).max:
+            df[col] = df[col].astype(np.int32)
+        else:
+            df[col] = df[col].astype(np.int64)  # This covers any larger integers
 
+    return df
+
+def convert_float_columns(df):
+    # Iterate through each column in the DataFrame
+    for col in df.select_dtypes(include=['float']):
+        # Get the minimum and maximum values of the column
+        min_val = df[col].min()
+        max_val = df[col].max()
+
+        # Determine the appropriate float type
+        if min_val >= np.finfo(np.float16).min and max_val <= np.finfo(np.float16).max:
+            df[col] = df[col].astype(np.float16)
+        elif min_val >= np.finfo(np.float32).min and max_val <= np.finfo(np.float32).max:
+            df[col] = df[col].astype(np.float32)
+        else:
+            df[col] = df[col].astype(np.float64)  # This covers any larger floats
+
+    return df
+
+def check_non_float_columns(df):
+    non_float_columns = []
+
+    for column in df.columns:
+        print(column)
+        for value in df[column]:
+            try:
+                float(value)  # Try to convert to float
+            except ValueError:
+                print(value)
+                non_float_columns.append(column)
+                break  # No need to check further if one non-convertible value is found
+
+    return list(set(non_float_columns))
 
 # Define evaluation metrics
 def evaluate_model(model, X_test, y_test):
@@ -33,6 +77,21 @@ def evaluate_model(model, X_test, y_test):
     recall = recall_score(y_test, y_pred, average='weighted')
     precision = precision_score(y_test, y_pred, average='weighted')
     return accuracy, f1, recall, precision
+
+# Load dataset
+data = pd.read_csv('data_processed.csv')  # Replace with your CSV file path
+#data = convert_integer_columns(data)
+#data = convert_float_columns(data)
+print("Hello!")
+hasHeadache_col = data.pop('hasHeadache')
+data['hasHeadache'] = hasHeadache_col
+
+print(list(data.columns)[-1])
+
+# Assume the last column is the target
+X = data.iloc[:, :-1].values
+y = data.iloc[:, -1].values
+
 
 
 # Create K-Fold cross-validator
@@ -56,6 +115,8 @@ rf_best_params = grid_rf.best_params_
 rf_accuracy, rf_f1, rf_recall, rf_precision = evaluate_model(grid_rf, X, y)
 results.append(['Random Forest', rf_best_params, rf_accuracy, rf_f1, rf_recall, rf_precision])
 
+print("Finished random forest")
+
 # 2. Decision Tree Classifier (transparent, C4.5 approximation)
 dt_param_grid = {
     'criterion': ['gini', 'entropy'],
@@ -71,21 +132,7 @@ dt_best_params = grid_dt.best_params_
 dt_accuracy, dt_f1, dt_recall, dt_precision = evaluate_model(grid_dt, X, y)
 results.append(['Decision Tree (C4.5)', dt_best_params, dt_accuracy, dt_f1, dt_recall, dt_precision])
 
-# 3. Support Vector Machine (black-box)
-svm_param_grid = {
-    'C': [0.1, 1, 10],
-    'kernel': ['linear', 'rbf'],
-    'gamma': ['scale', 'auto']
-}
-svm = SVC(random_state=42)
-grid_svm = GridSearchCV(svm, svm_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
-grid_svm.fit(X, y)
-svm_best_params = grid_svm.best_params_
-
-# Evaluate SVM model
-svm_accuracy, svm_f1, svm_recall, svm_precision = evaluate_model(grid_svm, X, y)
-results.append(['SVM', svm_best_params, svm_accuracy, svm_f1, svm_recall, svm_precision])
-
+print("Finished DT")
 
 # 4. Deep Learning Model (black-box)
 def create_model():
@@ -103,12 +150,14 @@ dl_param_grid = {
 }
 dl_model = KerasClassifier(build_fn=create_model, verbose=0)
 grid_dl = GridSearchCV(dl_model, dl_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
-grid_dl.fit(X, y)
-dl_best_params = grid_dl.best_params_
+#grid_dl.fit(X, y)
+#dl_best_params = grid_dl.best_params_
 
 # Evaluate DL model
-dl_accuracy, dl_f1, dl_recall, dl_precision = evaluate_model(grid_dl, X, y)
-results.append(['Deep Learning', dl_best_params, dl_accuracy, dl_f1, dl_recall, dl_precision])
+#dl_accuracy, dl_f1, dl_recall, dl_precision = evaluate_model(grid_dl, X, y)
+#results.append(['Deep Learning', dl_best_params, dl_accuracy, dl_f1, dl_recall, dl_precision])
+
+print("Finished DL")
 
 # Export results to CSV
 results_df = pd.DataFrame(results, columns=['Model', 'Best Params', 'Accuracy', 'F1-Score', 'Recall', 'Precision'])
