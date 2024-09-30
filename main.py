@@ -79,7 +79,7 @@ def evaluate_model(model, X_test, y_test):
     return accuracy, f1, recall, precision
 
 # Load dataset
-data = pd.read_csv('data_processed.csv')  # Replace with your CSV file path
+data = pd.read_csv('data_processed.csv')[:100000]  # Replace with your CSV file path
 #data = convert_integer_columns(data)
 #data = convert_float_columns(data)
 print("Hello!")
@@ -92,7 +92,7 @@ print(list(data.columns)[-1])
 X = data.iloc[:, :-1].values
 y = data.iloc[:, -1].values
 
-
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Create K-Fold cross-validator
 kf = KFold(n_splits=5, shuffle=True, random_state=42)
@@ -108,11 +108,11 @@ rf_param_grid = {
 }
 rf = RandomForestClassifier(random_state=42)
 grid_rf = GridSearchCV(rf, rf_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
-grid_rf.fit(X, y)
+grid_rf.fit(X_train, y_train)
 rf_best_params = grid_rf.best_params_
 
 # Evaluate RF model
-rf_accuracy, rf_f1, rf_recall, rf_precision = evaluate_model(grid_rf, X, y)
+rf_accuracy, rf_f1, rf_recall, rf_precision = evaluate_model(grid_rf, X_test, y_test)
 results.append(['Random Forest', rf_best_params, rf_accuracy, rf_f1, rf_recall, rf_precision])
 
 print("Finished random forest")
@@ -125,11 +125,11 @@ dt_param_grid = {
 }
 dt = DecisionTreeClassifier(random_state=42)
 grid_dt = GridSearchCV(dt, dt_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
-grid_dt.fit(X, y)
+grid_dt.fit(X_train, y_train)
 dt_best_params = grid_dt.best_params_
 
 # Evaluate DT model
-dt_accuracy, dt_f1, dt_recall, dt_precision = evaluate_model(grid_dt, X, y)
+dt_accuracy, dt_f1, dt_recall, dt_precision = evaluate_model(grid_rf, X_test, y_test)
 results.append(['Decision Tree (C4.5)', dt_best_params, dt_accuracy, dt_f1, dt_recall, dt_precision])
 
 print("Finished DT")
@@ -150,11 +150,11 @@ dl_param_grid = {
 }
 dl_model = KerasClassifier(build_fn=create_model, verbose=0)
 grid_dl = GridSearchCV(dl_model, dl_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
-#grid_dl.fit(X, y)
+#grid_dl.fit(X_train, y_train)
 #dl_best_params = grid_dl.best_params_
 
 # Evaluate DL model
-#dl_accuracy, dl_f1, dl_recall, dl_precision = evaluate_model(grid_dl, X, y)
+#dl_accuracy, dl_f1, dl_recall, dl_precision = evaluate_model(grid_rf, X_test, y_test)
 #results.append(['Deep Learning', dl_best_params, dl_accuracy, dl_f1, dl_recall, dl_precision])
 
 print("Finished DL")
