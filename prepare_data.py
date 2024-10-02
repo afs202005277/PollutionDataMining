@@ -19,7 +19,7 @@ def prepare_data():
 
     cols = ['VAERS_ID', 'RECVDATE', 'SYMPTOM1', 'SYMPTOM2', 'SYMPTOM3', 'SYMPTOM4', 'SYMPTOM5',
             'SYMPTOMVERSION1', 'SYMPTOMVERSION2', 'SYMPTOMVERSION3', 'SYMPTOMVERSION4', 'SYMPTOMVERSION5',
-            'SYMPTOM_TEXT', 'LAB_DATA']
+            'SYMPTOM_TEXT', 'LAB_DATA', 'CUR_ILL']
 
     data = data.drop(cols, axis=1)
 
@@ -102,6 +102,8 @@ def prepare_data():
     n = len(data[data['hasHeadache'] == 1])
 
     data = pd.concat([data[data['hasHeadache'] == 1], data[data['hasHeadache'] == 0].sample(n)])
+    
+    data = data.sample(frac = 1)
 
     data.to_csv('data_processed.csv', index=False)
 

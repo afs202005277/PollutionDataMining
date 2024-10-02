@@ -79,7 +79,7 @@ def evaluate_model(model, X_test, y_test):
     return accuracy, f1, recall, precision
 
 # Load dataset
-data = pd.read_csv('data_processed.csv')[:100000]  # Replace with your CSV file path
+data = pd.read_csv('data_processed.csv')  # Replace with your CSV file path
 #data = convert_integer_columns(data)
 #data = convert_float_columns(data)
 print("Hello!")
