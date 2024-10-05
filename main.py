@@ -3,7 +3,7 @@ import numpy as np
 from scipy.stats import describe
 from sklearn.model_selection import train_test_split, GridSearchCV, KFold
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score
 from sklearn.preprocessing import StandardScaler
@@ -13,7 +13,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from scikeras.wrappers import KerasClassifier
-
+import matplotlib.pyplot as plt
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -86,9 +86,6 @@ print("Hello!")
 hasHeadache_col = data.pop('hasHeadache')
 data['hasHeadache'] = hasHeadache_col
 
-print(list(data.columns)[-1])
-
-# Assume the last column is the target
 X = data.iloc[:, :-1].values
 y = data.iloc[:, -1].values
 
@@ -129,32 +126,39 @@ grid_dt.fit(X_train, y_train)
 dt_best_params = grid_dt.best_params_
 
 # Evaluate DT model
-dt_accuracy, dt_f1, dt_recall, dt_precision = evaluate_model(grid_rf, X_test, y_test)
+dt_accuracy, dt_f1, dt_recall, dt_precision = evaluate_model(grid_dt, X_test, y_test)
 results.append(['Decision Tree (C4.5)', dt_best_params, dt_accuracy, dt_f1, dt_recall, dt_precision])
 
 print("Finished DT")
+
+# Save the best decision tree
+best_dt_model = grid_dt.best_estimator_
+plt.figure(figsize=(20, 10))
+plot_tree(best_dt_model, filled=True, feature_names=data.columns[:-1], class_names=["0", "1"], rounded=True)
+plt.savefig('best_decision_tree.png', format='png')
+print("Decision tree saved as 'best_decision_tree.png'")
 
 # 4. Deep Learning Model (black-box)
 def create_model():
     model = Sequential()
     model.add(Dense(64, input_dim=X.shape[1], activation='relu'))
     model.add(Dense(32, activation='relu'))
-    model.add(Dense(1, activation='sigmoid'))  # Use 'softmax' for multi-class classification
+    model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
-
 
 dl_param_grid = {
     'epochs': [50, 100],
     'batch_size': [10, 20]
 }
 dl_model = KerasClassifier(build_fn=create_model, verbose=0)
-grid_dl = GridSearchCV(dl_model, dl_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
+
+#grid_dl = GridSearchCV(dl_model, dl_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
 #grid_dl.fit(X_train, y_train)
 #dl_best_params = grid_dl.best_params_
 
 # Evaluate DL model
-#dl_accuracy, dl_f1, dl_recall, dl_precision = evaluate_model(grid_rf, X_test, y_test)
+#dl_accuracy, dl_f1, dl_recall, dl_precision = evaluate_model(grid_dl, X_test, y_test)
 #results.append(['Deep Learning', dl_best_params, dl_accuracy, dl_f1, dl_recall, dl_precision])
 
 print("Finished DL")
