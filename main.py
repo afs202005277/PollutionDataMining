@@ -12,7 +12,6 @@ from sklearn.pipeline import Pipeline
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
-from scikeras.wrappers import KerasClassifier
 import matplotlib.pyplot as plt
 import warnings
 
@@ -108,6 +107,16 @@ grid_rf = GridSearchCV(rf, rf_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
 grid_rf.fit(X_train, y_train)
 rf_best_params = grid_rf.best_params_
 
+#chart with the most important features
+importances = grid_rf.best_estimator_.feature_importances_
+indices = np.argsort(importances)[::-1]
+plt.figure(figsize=(20, 10))
+plt.title("Feature importances")
+plt.bar(range(X_train.shape[1]), importances[indices], align="center")
+plt.xticks(range(X_train.shape[1]), data.columns[:-1][indices], rotation=90)
+plt.xlim([-1, X_train.shape[1]])
+plt.savefig('feature_importances.png', format='png')
+
 # Evaluate RF model
 rf_accuracy, rf_f1, rf_recall, rf_precision = evaluate_model(grid_rf, X_test, y_test)
 results.append(['Random Forest', rf_best_params, rf_accuracy, rf_f1, rf_recall, rf_precision])
@@ -147,19 +156,30 @@ def create_model():
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
 
-dl_param_grid = {
-    'epochs': [50, 100],
-    'batch_size': [10, 20]
-}
-dl_model = KerasClassifier(build_fn=create_model, verbose=0)
+epochs = 50
+batch_size = 32
+dl_model = create_model()
 
-#grid_dl = GridSearchCV(dl_model, dl_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
-#grid_dl.fit(X_train, y_train)
-#dl_best_params = grid_dl.best_params_
+X_train = X_train.astype('float32')
+X_test = X_test.astype('float32')
+
+dl_model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=2)
+
 
 # Evaluate DL model
-#dl_accuracy, dl_f1, dl_recall, dl_precision = evaluate_model(grid_dl, X_test, y_test)
-#results.append(['Deep Learning', dl_best_params, dl_accuracy, dl_f1, dl_recall, dl_precision])
+y_pred = dl_model.predict(X_test)
+y_pred = np.argmax(y_pred, axis=1)
+
+print(y_pred)
+
+print(y_test)
+
+
+dl_accuracy = accuracy_score(y_test, y_pred)
+dl_f1 = f1_score(y_test, y_pred)
+dl_recall = recall_score(y_test, y_pred)
+dl_precision = precision_score(y_test, y_pred)
+results.append(['Deep Learning', {f"'epochs': {epochs}, 'batch_size': {batch_size}"}, dl_accuracy, dl_f1, dl_recall, dl_precision])
 
 print("Finished DL")
 
