@@ -17,7 +17,7 @@ def prepare_data():
         (data['SYMPTOM1'] == 'Headache') | (data['SYMPTOM2'] == 'Headache') | (data['SYMPTOM3'] == 'Headache') | (
                     data['SYMPTOM4'] == 'Headache') | (data['SYMPTOM5'] == 'Headache'), 1, 0)
 
-    cols = ['VAERS_ID', 'RECVDATE', 'SYMPTOM1', 'SYMPTOM2', 'SYMPTOM3', 'SYMPTOM4', 'SYMPTOM5',
+    cols = ['VAERS_ID', 'CAGE_YR', 'RECVDATE', 'TODAYS_DATE', 'SYMPTOM1', 'SYMPTOM2', 'SYMPTOM3', 'SYMPTOM4', 'SYMPTOM5',
             'SYMPTOMVERSION1', 'SYMPTOMVERSION2', 'SYMPTOMVERSION3', 'SYMPTOMVERSION4', 'SYMPTOMVERSION5',
             'SYMPTOM_TEXT', 'LAB_DATA', 'CUR_ILL']
 
@@ -28,7 +28,7 @@ def prepare_data():
 
     data['VAX_DATE'] = (pd.to_datetime(data['VAX_DATE']).astype('int64') // 10 ** 9).astype('int32')
     data['ONSET_DATE'] = (pd.to_datetime(data['ONSET_DATE']).astype('int64') // 10 ** 9).astype('int32')
-    data['TODAYS_DATE'] = (pd.to_datetime(data['TODAYS_DATE']).astype('int64') // 10 ** 9).astype('int32')
+    #data['TODAYS_DATE'] = (pd.to_datetime(data['TODAYS_DATE']).astype('int64') // 10 ** 9).astype('int32')
 
     data['RECOVD'].replace({'N': -1, 'U': 0, 'Y': 1}, inplace=True)
     data['RECOVD'].fillna(0, inplace=True)
@@ -55,7 +55,7 @@ def prepare_data():
 
     data['VAX_NAME'] = pd.factorize(data['VAX_NAME'])[0]
 
-    data['CAGE_YR'].fillna(data['CAGE_YR'].mean(), inplace=True)
+    #data['CAGE_YR'].fillna(data['CAGE_YR'].mean(), inplace=True)
 
     data['STATE'] = pd.factorize(data['STATE'])[0]
     data['STATE'].fillna(-1, inplace=True)
@@ -66,7 +66,7 @@ def prepare_data():
 
     data['ONSET_DATE'].dropna(inplace=True)
     data['VAX_DATE'].dropna(inplace=True)
-    data['TODAYS_DATE'].dropna(inplace=True)
+    #data['TODAYS_DATE'].dropna(inplace=True)
 
     data['VAX_DOSE_SERIES'].replace('UNK', 0, inplace=True)
     data['VAX_DOSE_SERIES'].fillna(0, inplace=True)

@@ -1,15 +1,9 @@
 import pandas as pd
 import numpy as np
-from scipy.stats import describe
 from sklearn.model_selection import train_test_split, GridSearchCV, KFold
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier, plot_tree
-from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.neural_network import MLPClassifier
-from sklearn.pipeline import Pipeline
-import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 import matplotlib.pyplot as plt
@@ -17,56 +11,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-def convert_integer_columns(df):
-    # Iterate through each column in the DataFrame
-    for col in df.select_dtypes(include=['int']):
-        # Get the minimum and maximum values of the column
-        min_val = df[col].min()
-        max_val = df[col].max()
-
-        # Determine the appropriate integer type
-        if min_val >= np.iinfo(np.int8).min and max_val <= np.iinfo(np.int8).max:
-            df[col] = df[col].astype(np.int8)
-        elif min_val >= np.iinfo(np.int16).min and max_val <= np.iinfo(np.int16).max:
-            df[col] = df[col].astype(np.int16)
-        elif min_val >= np.iinfo(np.int32).min and max_val <= np.iinfo(np.int32).max:
-            df[col] = df[col].astype(np.int32)
-        else:
-            df[col] = df[col].astype(np.int64)  # This covers any larger integers
-
-    return df
-
-def convert_float_columns(df):
-    # Iterate through each column in the DataFrame
-    for col in df.select_dtypes(include=['float']):
-        # Get the minimum and maximum values of the column
-        min_val = df[col].min()
-        max_val = df[col].max()
-
-        # Determine the appropriate float type
-        if min_val >= np.finfo(np.float16).min and max_val <= np.finfo(np.float16).max:
-            df[col] = df[col].astype(np.float16)
-        elif min_val >= np.finfo(np.float32).min and max_val <= np.finfo(np.float32).max:
-            df[col] = df[col].astype(np.float32)
-        else:
-            df[col] = df[col].astype(np.float64)  # This covers any larger floats
-
-    return df
-
-def check_non_float_columns(df):
-    non_float_columns = []
-
-    for column in df.columns:
-        print(column)
-        for value in df[column]:
-            try:
-                float(value)  # Try to convert to float
-            except ValueError:
-                print(value)
-                non_float_columns.append(column)
-                break  # No need to check further if one non-convertible value is found
-
-    return list(set(non_float_columns))
 
 # Define evaluation metrics
 def evaluate_model(model, X_test, y_test):
@@ -78,10 +22,10 @@ def evaluate_model(model, X_test, y_test):
     return accuracy, f1, recall, precision
 
 # Load dataset
-data = pd.read_csv('data_processed.csv')  # Replace with your CSV file path
-#data = convert_integer_columns(data)
-#data = convert_float_columns(data)
-print("Hello!")
+data = pd.read_csv('data_processed.csv')[:1000]
+
+print('Dataset loaded.')
+
 hasHeadache_col = data.pop('hasHeadache')
 data['hasHeadache'] = hasHeadache_col
 
@@ -99,7 +43,7 @@ results = []
 # 1. Random Forest Classifier (transparent)
 rf_param_grid = {
     'n_estimators': [50, 100, 200],
-    'max_depth': [10, 20, None],
+    'max_depth': [5, 7, 9],
     'min_samples_split': [2, 5, 10]
 }
 rf = RandomForestClassifier(random_state=42)
@@ -126,7 +70,7 @@ print("Finished random forest")
 # 2. Decision Tree Classifier (transparent, C4.5 approximation)
 dt_param_grid = {
     'criterion': ['gini', 'entropy'],
-    'max_depth': [10, 20, None],
+    'max_depth': [5, 7, 9],
     'min_samples_split': [2, 5, 10]
 }
 dt = DecisionTreeClassifier(random_state=42)
@@ -142,7 +86,7 @@ print("Finished DT")
 
 # Save the best decision tree
 best_dt_model = grid_dt.best_estimator_
-plt.figure(figsize=(20, 10))
+plt.figure(figsize=(50, 50))
 plot_tree(best_dt_model, filled=True, feature_names=data.columns[:-1], class_names=["0", "1"], rounded=True)
 plt.savefig('best_decision_tree.png', format='png')
 print("Decision tree saved as 'best_decision_tree.png'")
