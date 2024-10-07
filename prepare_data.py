@@ -57,6 +57,12 @@ def prepare_data():
 
     data['VAX_DOSE_SERIES'].replace({'7+': 7.5}, inplace=True)
 
+    data['ALLERGIES'] = data['ALLERGIES'].replace({'(?i)no': np.nan, '(?i)none': np.nan, '(?i)na': np.nan, '(?i)zero': np.nan, '(?i)n/a': np.nan, '(?i)unknown': np.nan, '(?i)unk': np.nan, '0': np.nan, '(?i)n.a': np.nan}, regex=True)
+    data['ALLERGIES'] = data['ALLERGIES'].notna() & (data['ALLERGIES'] != '')
+
+    data['OTHER_MEDS'] = data['OTHER_MEDS'].replace({'(?i)no': np.nan, '(?i)none': np.nan, '(?i)na': np.nan, '(?i)zero': np.nan, '(?i)n/a': np.nan, '(?i)unknown': np.nan, '(?i)unk': np.nan, '0': np.nan, '(?i)n.a': np.nan}, regex=True)
+    data['OTHER_MEDS'] = data['OTHER_MEDS'].notna() & (data['OTHER_MEDS'] != '')
+
     data['VAX_LOT'].replace(' ', '', inplace=True)
     data['VAX_LOT'] = pd.factorize(data['VAX_LOT'])[0]
     data['VAX_LOT'].fillna(0, inplace=True)
@@ -106,33 +112,10 @@ def prepare_data():
     data['VAX_DOSE_SERIES'].replace('UNK', 0, inplace=True)
     data['VAX_DOSE_SERIES'].fillna(0, inplace=True)
 
-    allergies = ['penicillin', 'cat', 'dog', 'dust', 'ragweed', 'morphine', 'shrimp', 'shellfish',
-                 'anaphylaxis', 'iodine', 'pcn', 'ceclor', 'sulfa', 'latex', 'peanut', 'mold', 'bee', 'nut',
-                 'aspirin', 'pepcid', 'doxycicline', 'crestor', 'cockroach', 'codeine', 'inh', 'seafood',
-                 'mushroom', 'chlorthalidone', 'grass', 'amoxicillin', 'fish',
-                 'seasonal', 'percocet', 'acetaminophen', 'lovonox', 'asa', 'motrin', 'bugs', 'ceftriaxone', 'ees',
-                 'wheat', 'gluten', 'vancomycin', 'msg', 'dilaudid', 'nsais', 'naproxen', 'benadryl',
-                 'dairy', 'ibuprofen', 'kiwi', 'bactrim', 'erytromycin', 'benzoyl', 'keflex', 'lidocaine',
-                 'pineapple', 'clindamycin', 'indocin', 'demerol', 'lorabid', 'sulfur', 'sulfer', 'strawberry',
-                 'vicodin']
-
-    for allergy in allergies:
-        data[f'has_{allergy}_allergy'] = data['ALLERGIES'].str.lower().str.contains(allergy, case=False, na=False)
-
-    meds = ['acetaminophen', 'ibuprofen', 'aspirin', 'diphenhydramine', 'paracetamol',
-            'insulin', 'benzoyl', 'synthroid', 'fluvoxamine', 'singulair', 'ozempic', 'avapro',
-            'zyrtec', 'propanol', 'prozac', 'loratadine', 'metformin', 'lisinopril', 'metoprolol',
-            'losartan', 'albuterol', 'levothyroxine', 'omeprazole', 'simvastatin', 'hydrochlorothiazide',
-            'lasix', 'celecoxib', 'flurbiprofen', 'fenoprofen']
-
-    for med in meds:
-        data[f'use_{med}'] = data['OTHER_MEDS'].str.lower().str.contains(allergy, case=False, na=False)
-
     data['has_migraine'] = data['HISTORY'].str.lower().str.contains('migraine', case=False, na=False)
 
-    cols = ['ALLERGIES', 'OTHER_MEDS', 'HISTORY']
-
-    data = data.drop(cols, axis=1)
+    data['HISTORY'] = data['HISTORY'].replace({'(?i)no': np.nan, '(?i)none': np.nan, '(?i)na': np.nan, '(?i)zero': np.nan, '(?i)n/a': np.nan, '(?i)unknown': np.nan, '(?i)unk': np.nan, '0': np.nan, '(?i)n.a': np.nan}, regex=True)
+    data['HISTORY'] = data['HISTORY'].notna() & (data['HISTORY'] != '')
 
     n = len(data[data['hasHeadache'] == 1])
 
@@ -143,6 +126,8 @@ def prepare_data():
     pollution_data = pollution_data.groupby('State')[['AirQuality', 'WaterPollution']].mean().reset_index()
 
     merged_df = pd.merge(data, pollution_data, on='State', suffixes=('_df1', '_df2'))
+
+    data[:200].to_csv('sample.csv', index=False)
 
     merged_df.to_csv('merged_data_processed.csv', index=False)
     data.to_csv('data_processed.csv', index=False)
