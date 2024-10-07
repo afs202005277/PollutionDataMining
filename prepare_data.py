@@ -144,7 +144,8 @@ def prepare_data():
 
     merged_df = pd.merge(data, pollution_data, on='State', suffixes=('_df1', '_df2'))
 
-    merged_df.to_csv('data_processed.csv', index=False)
+    merged_df.to_csv('merged_data_processed.csv', index=False)
+    data.to_csv('data_processed.csv', index=False)
 
 
 if __name__ == '__main__':
