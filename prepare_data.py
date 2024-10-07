@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 abbreviation_to_state = {
     'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
@@ -15,6 +16,22 @@ abbreviation_to_state = {
 }
 
 state_to_abbreviation = {state: abbrev for abbrev, state in abbreviation_to_state.items()}
+
+def standard_dataset(df):
+    # Step 1: Separate features and target variable
+    X = df.drop(columns=['hasHeadache'])  # Exclude the target column
+    y = df['hasHeadache']  # Target variable
+    # Step 2: Standardize the features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # Step 3: Convert back to DataFrame (optional)
+    X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns)
+
+    # Step 4: Combine the scaled features with the target variable
+    final_df = pd.concat([X_scaled_df, y.reset_index(drop=True)], axis=1)
+
+    return final_df
 
 def prepare_data():
     data1 = pd.read_csv('data/VAERSDATA.csv')
@@ -127,8 +144,10 @@ def prepare_data():
 
     merged_df = pd.merge(data, pollution_data, on='State', suffixes=('_df1', '_df2'))
 
-    data[:200].to_csv('sample.csv', index=False)
+    merged_df = standard_dataset(merged_df)
+    data = standard_dataset(data)
 
+    data[:200].to_csv('sample.csv', index=False)
     merged_df.to_csv('merged_data_processed.csv', index=False)
     data.to_csv('data_processed.csv', index=False)
 
