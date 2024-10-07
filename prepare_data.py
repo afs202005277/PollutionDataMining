@@ -48,6 +48,8 @@ def prepare_data():
     # merge data based on VAERS_ID
     data = pd.merge(data1, data2, on='VAERS_ID')
     data = pd.merge(data, data3, on='VAERS_ID')
+    
+    data['hadHeadIllness'] = np.where((data['CUR_ILL'].str.contains('head|Head', na=False)) | (data['SYMPTOM_TEXT'].str.contains('head|Head', na=False)), 1, 0)
 
     # Check if some of the symptoms columns have a 'headache' as value, if yes, create a new column with a boolean value
 
