@@ -103,6 +103,7 @@ def prepare_data():
     # data['CAGE_YR'].fillna(data['CAGE_YR'].mean(), inplace=True)
 
     data.rename(columns={'STATE': 'State'}, inplace=True)
+    data = data.dropna(subset=['State'])
     pollution_data.rename(columns={'Region': 'State'}, inplace=True)
 
     pollution_data['State'] = pollution_data['State'].replace('District of Columbia', 'Washington')
@@ -144,6 +145,7 @@ def prepare_data():
 
     merged_df = pd.merge(data, pollution_data, on='State', suffixes=('_df1', '_df2'))
 
+    merged_df = merged_df.drop(columns=['State'])
     merged_df = standard_dataset(merged_df)
     data = standard_dataset(data)
 
