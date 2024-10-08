@@ -53,7 +53,7 @@ def get_batch_embeddings(texts, batch_size=64):
         with torch.no_grad():
             outputs = model(**inputs)
         # Average the embeddings for the entire batch
-        embeddings.extend(outputs.last_hidden_state.mean(dim=1).squeeze().numpy())
+        embeddings.extend(outputs.last_hidden_state.mean(dim=1).numpy())
 
         if first_time:
             duration = time.time() - start
@@ -115,7 +115,6 @@ def prepare_data():
 
     missing_percentage = data.isnull().mean() * 100
     data = data.loc[:, missing_percentage <= 60]
-    data = data[:1000]
 
     data['VAX_DATE'] = (pd.to_datetime(data['VAX_DATE']).astype('int64') // 10 ** 9).astype('int32')
     data['ONSET_DATE'] = (pd.to_datetime(data['ONSET_DATE']).astype('int64') // 10 ** 9).astype('int32')
@@ -193,7 +192,7 @@ def prepare_data():
         raw_embed = np.array(get_batch_embeddings(data[column_name].tolist()))
 
         n_components = scree_plot(raw_embed)
-        pca = PCA(n_components=n_components)
+        pca = PCA(n_components=n_components, random_state=42)
         reduced_embeddings = pca.fit_transform(raw_embed)
         embeddings = pd.DataFrame(reduced_embeddings,
                                   columns=[f"{column_name}_dim_{i + 1}" for i in range(reduced_embeddings.shape[1])])

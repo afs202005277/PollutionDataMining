@@ -30,7 +30,7 @@ def evaluate_model(model, X_test, y_test):
     return accuracy, f1, recall, precision
 
 # Load dataset
-data = pd.read_csv('data_processed.csv')
+data = pd.read_csv('sample.csv')
 
 print('Dataset loaded.')
 
