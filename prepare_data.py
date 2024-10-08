@@ -1,6 +1,16 @@
+import time
+
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+
+import torch
+from transformers import BertTokenizer, BertModel, AutoTokenizer, AutoModel
+
+tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
+model = AutoModel.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
 
 abbreviation_to_state = {
     'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
@@ -33,7 +43,46 @@ def standard_dataset(df):
 
     return final_df
 
+def get_batch_embeddings(texts, batch_size=64):
+    embeddings = []
+    first_time = True
+    start = time.time()
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i + batch_size]
+        inputs = tokenizer(batch, return_tensors='pt', padding=True, truncation=True, max_length=256)
+        with torch.no_grad():
+            outputs = model(**inputs)
+        # Average the embeddings for the entire batch
+        embeddings.extend(outputs.last_hidden_state.mean(dim=1).squeeze().numpy())
+
+        if first_time:
+            duration = time.time() - start
+            print(duration)
+            print(f"Estimated time: {round(len(texts)/ batch_size *  duration / 60 / 60, 2)} hours.")
+            first_time = False
+    return embeddings
+
+def scree_plot(raw_embed):
+    # Assume raw_embed is your embeddings array
+    pca = PCA()  # Fit PCA without specifying n_components
+    pca.fit(raw_embed)
+
+    # Plot the cumulative explained variance
+    #plt.figure(figsize=(8, 6))
+    #plt.plot(np.cumsum(pca.explained_variance_ratio_))
+    #plt.xlabel('Number of Components')
+    #plt.ylabel('Cumulative Explained Variance')
+    #plt.title('Explained Variance vs. Number of Components')
+    #plt.grid(True)
+    #plt.show()
+
+    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+    n_components = np.argmax(cumulative_variance >= 0.95) + 1  # 95% threshold
+    print(f"Number of components that explain 95% of variance: {n_components}")
+    return n_components
+
 def prepare_data():
+    columns_to_embeddings = ['HISTORY', 'ALLERGIES']
     data1 = pd.read_csv('data/VAERSDATA.csv')
     data2 = pd.read_csv('data/VAERSVAX.csv')
     data3 = pd.read_csv('data/VAERSSYMPTOMS.csv')
@@ -60,12 +109,13 @@ def prepare_data():
     cols = ['VAERS_ID', 'CAGE_YR', 'RECVDATE', 'TODAYS_DATE', 'SYMPTOM1', 'SYMPTOM2', 'SYMPTOM3', 'SYMPTOM4',
             'SYMPTOM5',
             'SYMPTOMVERSION1', 'SYMPTOMVERSION2', 'SYMPTOMVERSION3', 'SYMPTOMVERSION4', 'SYMPTOMVERSION5',
-            'SYMPTOM_TEXT', 'LAB_DATA', 'CUR_ILL']
+            'SYMPTOM_TEXT', 'LAB_DATA']
 
     data = data.drop(cols, axis=1)
 
     missing_percentage = data.isnull().mean() * 100
     data = data.loc[:, missing_percentage <= 60]
+    data = data[:1000]
 
     data['VAX_DATE'] = (pd.to_datetime(data['VAX_DATE']).astype('int64') // 10 ** 9).astype('int32')
     data['ONSET_DATE'] = (pd.to_datetime(data['ONSET_DATE']).astype('int64') // 10 ** 9).astype('int32')
@@ -77,7 +127,7 @@ def prepare_data():
     data['VAX_DOSE_SERIES'].replace({'7+': 7.5}, inplace=True)
 
     data['ALLERGIES'] = data['ALLERGIES'].replace({'(?i)no': np.nan, '(?i)none': np.nan, '(?i)na': np.nan, '(?i)zero': np.nan, '(?i)n/a': np.nan, '(?i)unknown': np.nan, '(?i)unk': np.nan, '0': np.nan, '(?i)n.a': np.nan}, regex=True)
-    data['ALLERGIES'] = data['ALLERGIES'].notna() & (data['ALLERGIES'] != '')
+    # data['ALLERGIES'] = data['ALLERGIES'].notna() & (data['ALLERGIES'] != '')
 
     data['OTHER_MEDS'] = data['OTHER_MEDS'].replace({'(?i)no': np.nan, '(?i)none': np.nan, '(?i)na': np.nan, '(?i)zero': np.nan, '(?i)n/a': np.nan, '(?i)unknown': np.nan, '(?i)unk': np.nan, '0': np.nan, '(?i)n.a': np.nan}, regex=True)
     data['OTHER_MEDS'] = data['OTHER_MEDS'].notna() & (data['OTHER_MEDS'] != '')
@@ -133,9 +183,22 @@ def prepare_data():
     data['VAX_DOSE_SERIES'].fillna(0, inplace=True)
 
     data['has_migraine'] = data['HISTORY'].str.lower().str.contains('migraine', case=False, na=False)
+    data['HISTORY'] = data['HISTORY'].replace(
+        {'(?i)no': np.nan, '(?i)none': np.nan, '(?i)na': np.nan, '(?i)zero': np.nan, '(?i)n/a': np.nan,
+         '(?i)unknown': np.nan, '(?i)unk': np.nan, '0': np.nan, '(?i)n.a': np.nan}, regex=True)
 
-    data['HISTORY'] = data['HISTORY'].replace({'(?i)no': np.nan, '(?i)none': np.nan, '(?i)na': np.nan, '(?i)zero': np.nan, '(?i)n/a': np.nan, '(?i)unknown': np.nan, '(?i)unk': np.nan, '0': np.nan, '(?i)n.a': np.nan}, regex=True)
-    data['HISTORY'] = data['HISTORY'].notna() & (data['HISTORY'] != '')
+    for column_name in columns_to_embeddings:
+        data[column_name].fillna("unknown", inplace=True)
+
+        raw_embed = np.array(get_batch_embeddings(data[column_name].tolist()))
+
+        n_components = scree_plot(raw_embed)
+        pca = PCA(n_components=n_components)
+        reduced_embeddings = pca.fit_transform(raw_embed)
+        embeddings = pd.DataFrame(reduced_embeddings,
+                                  columns=[f"{column_name}_dim_{i + 1}" for i in range(reduced_embeddings.shape[1])])
+        data = pd.concat([data.drop(column_name, axis=1), embeddings], axis=1)
+        print(f"Finished concatenating {column_name}\n")
 
     n = len(data[data['hasHeadache'] == 1])
 
@@ -145,15 +208,24 @@ def prepare_data():
 
     pollution_data = pollution_data.groupby('State')[['AirQuality', 'WaterPollution']].mean().reset_index()
 
+    data.dropna(inplace=True)
     merged_df = pd.merge(data, pollution_data, on='State', suffixes=('_df1', '_df2'))
 
     merged_df = merged_df.drop(columns=['State'])
-    merged_df = standard_dataset(merged_df)
-    data = standard_dataset(data)
+    merged_df.columns = merged_df.columns.astype(str)
+    data.columns = data.columns.astype(str)
+
 
     data[:200].to_csv('sample.csv', index=False)
     merged_df.to_csv('merged_data_processed.csv', index=False)
     data.to_csv('data_processed.csv', index=False)
+
+    merged_df = standard_dataset(merged_df)
+    data = standard_dataset(data)
+
+    data[:200].to_csv('sample_scaled.csv', index=False)
+    merged_df.to_csv('merged_data_processed_scaled.csv', index=False)
+    data.to_csv('data_processed_scaled.csv', index=False)
 
 
 if __name__ == '__main__':
