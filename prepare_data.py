@@ -109,7 +109,7 @@ def prepare_data():
     cols = ['VAERS_ID', 'CAGE_YR', 'RECVDATE', 'TODAYS_DATE', 'SYMPTOM1', 'SYMPTOM2', 'SYMPTOM3', 'SYMPTOM4',
             'SYMPTOM5',
             'SYMPTOMVERSION1', 'SYMPTOMVERSION2', 'SYMPTOMVERSION3', 'SYMPTOMVERSION4', 'SYMPTOMVERSION5',
-            'SYMPTOM_TEXT', 'LAB_DATA']
+            'SYMPTOM_TEXT', 'LAB_DATA', 'CUR_ILL']
 
     data = data.drop(cols, axis=1)
 
