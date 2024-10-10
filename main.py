@@ -16,6 +16,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 import matplotlib.pyplot as plt
 import warnings
+import time
 
 warnings.filterwarnings('ignore')
 
@@ -49,6 +50,7 @@ def runTests(csv_name, results_name):
     # Dictionary to store results
     results = []
 
+    start_time = time.time() 
     # 1. Random Forest Classifier (transparent)
     rf_param_grid = {
         'n_estimators': [50, 100, 200],
@@ -75,6 +77,8 @@ def runTests(csv_name, results_name):
     results.append(['Random Forest', rf_best_params, rf_accuracy, rf_f1, rf_recall, rf_precision])
 
     print("Finished random forest")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 3. K-Nearest Neighbors (KNN)
     knn_param_grid = {
@@ -92,30 +96,14 @@ def runTests(csv_name, results_name):
     results.append(['KNN', knn_best_params, knn_accuracy, knn_f1, knn_recall, knn_precision])
 
     print("Finished KNN")
-
-    # 4. Logistic Regression
-    lr_param_grid = {
-        'penalty': ['l1', 'l2', 'elasticnet', 'none'],
-        'C': [0.1, 1, 10],
-        'solver': ['lbfgs', 'liblinear', 'saga'],
-        'max_iter': [100, 200, 500]
-    }
-    lr = LogisticRegression(random_state=42)
-    grid_lr = GridSearchCV(lr, lr_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
-    grid_lr.fit(X_train, y_train)
-    lr_best_params = grid_lr.best_params_
-
-    # Evaluate LR model
-    lr_accuracy, lr_f1, lr_recall, lr_precision = evaluate_model(grid_lr, X_test, y_test)
-    results.append(['Logistic Regression', lr_best_params, lr_accuracy, lr_f1, lr_recall, lr_precision])
-
-    print("Finished LR")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 5. Gradient Boosting Classifier
     gb_param_grid = {
         'n_estimators': [100, 200, 500],
         'learning_rate': [0.01, 0.1, 0.5],
-        'max_depth': [3, 5, 7]
+        'max_depth': [3, 7]
     }
     gb = GradientBoostingClassifier(random_state=42)
     grid_gb = GridSearchCV(gb, gb_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
@@ -127,6 +115,8 @@ def runTests(csv_name, results_name):
     results.append(['Gradient Boosting', gb_best_params, gb_accuracy, gb_f1, gb_recall, gb_precision])
 
     print("Finished GB")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 6. AdaBoost Classifier
     ada_param_grid = {
@@ -143,6 +133,8 @@ def runTests(csv_name, results_name):
     results.append(['AdaBoost', ada_best_params, ada_accuracy, ada_f1, ada_recall, ada_precision])
 
     print("Finished AdaBoost")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 8. Naive Bayes (GaussianNB)
     gnb_param_grid = {}  # No hyperparameters to tune for GaussianNB
@@ -155,6 +147,7 @@ def runTests(csv_name, results_name):
     results.append(['GaussianNB', None, gnb_accuracy, gnb_f1, gnb_recall, gnb_precision])
 
     print("Finished GaussianNB")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
 
     # 10. Extra Trees Classifier
     et_param_grid = {
@@ -173,6 +166,8 @@ def runTests(csv_name, results_name):
     results.append(['Extra Trees', et_best_params, et_accuracy, et_f1, et_recall, et_precision])
 
     print("Finished Extra Trees")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
 
     # 11. Multilayer Perceptron (Neural Network)
@@ -193,6 +188,8 @@ def runTests(csv_name, results_name):
     results.append(['MLP', mlp_best_params, mlp_accuracy, mlp_f1, mlp_recall, mlp_precision])
 
     print("Finished MLP")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
 
     # 13. Bagging Classifier
@@ -211,6 +208,8 @@ def runTests(csv_name, results_name):
     results.append(['Bagging', bag_best_params, bag_accuracy, bag_f1, bag_recall, bag_precision])
 
     print("Finished Bagging")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 14. Quadratic Discriminant Analysis (QDA)
     qda_param_grid = {
@@ -227,6 +226,8 @@ def runTests(csv_name, results_name):
     results.append(['QDA', qda_best_params, qda_accuracy, qda_f1, qda_recall, qda_precision])
 
     print("Finished QDA")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 15. Linear Discriminant Analysis (LDA)
     lda_param_grid = {
@@ -243,6 +244,8 @@ def runTests(csv_name, results_name):
     results.append(['LDA', lda_best_params, lda_accuracy, lda_f1, lda_recall, lda_precision])
 
     print("Finished LDA")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 16. Passive Aggressive Classifier
     pa_param_grid = {
@@ -260,6 +263,8 @@ def runTests(csv_name, results_name):
     results.append(['Passive Aggressive', pa_best_params, pa_accuracy, pa_f1, pa_recall, pa_precision])
 
     print("Finished Passive Aggressive")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 17. Perceptron
     perceptron_param_grid = {
@@ -278,6 +283,8 @@ def runTests(csv_name, results_name):
     results.append(['Perceptron', perceptron_best_params, perceptron_accuracy, perceptron_f1, perceptron_recall, perceptron_precision])
 
     print("Finished Perceptron")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 18. Ridge Classifier
     ridge_param_grid = {
@@ -294,6 +301,8 @@ def runTests(csv_name, results_name):
     results.append(['Ridge Classifier', ridge_best_params, ridge_accuracy, ridge_f1, ridge_recall, ridge_precision])
 
     print("Finished Ridge Classifier")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
 
     # 19. SGD Classifier
@@ -314,6 +323,8 @@ def runTests(csv_name, results_name):
     results.append(['SGD Classifier', sgd_best_params, sgd_accuracy, sgd_f1, sgd_recall, sgd_precision])
 
     print("Finished SGD Classifier")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 20. Bagging Classifier with Decision Trees
     bagging_param_grid = {
@@ -332,6 +343,8 @@ def runTests(csv_name, results_name):
     results.append(['Bagging Classifier with Decision Trees', bagging_best_params, bagging_accuracy, bagging_f1, bagging_recall, bagging_precision])
 
     print("Finished Bagging Classifier")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
 
     # 21. Voting Classifier (Ensemble Method)
@@ -348,6 +361,8 @@ def runTests(csv_name, results_name):
     results.append(['Voting Classifier', voting_best_params, voting_accuracy, voting_f1, voting_recall, voting_precision])
 
     print("Finished Voting Classifier")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
     # 22. Logistic Regression (L1 Regularization)
     logistic_param_grid = {
@@ -365,6 +380,8 @@ def runTests(csv_name, results_name):
     results.append(['Logistic Regression (L1)', logistic_param_grid, logistic_accuracy, logistic_f1, logistic_recall, logistic_precision])
 
     print("Finished Logistic Regression with L1 Regularization")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
 
     lasso_param_grid = {
@@ -390,6 +407,8 @@ def runTests(csv_name, results_name):
     results.append(['Lasso Regression (Converted to Classification)', lasso_accuracy, lasso_f1, lasso_recall, lasso_precision])
 
     print("Finished Lasso (Converted to Classification)")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
     # 23. Linear Regression
     linear_param_grid = {}  # Linear regression has no hyperparameters to tune by default
     linear = LinearRegression()
@@ -408,6 +427,8 @@ def runTests(csv_name, results_name):
     results.append(['Linear Regression', None, linear_accuracy, linear_f1, linear_recall, linear_precision])
 
     print("Finished Linear Regression")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
+    start_time = time.time()
 
 
 
@@ -427,6 +448,7 @@ def runTests(csv_name, results_name):
     results.append(['Decision Tree (C4.5)', dt_best_params, dt_accuracy, dt_f1, dt_recall, dt_precision])
 
     print("Finished DT")
+    print(f"Finished in {time.time() - start_time:.2f} seconds.")
 
     # Save the best decision tree
     best_dt_model = grid_dt.best_estimator_
