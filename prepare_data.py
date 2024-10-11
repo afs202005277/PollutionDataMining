@@ -191,11 +191,11 @@ def prepare_data():
 
         raw_embed = np.array(get_batch_embeddings(data[column_name].tolist()))
 
-        n_components = scree_plot(raw_embed)
-        pca = PCA(n_components=n_components, random_state=42)
-        reduced_embeddings = pca.fit_transform(raw_embed)
-        embeddings = pd.DataFrame(reduced_embeddings,
-                                  columns=[f"{column_name}_dim_{i + 1}" for i in range(reduced_embeddings.shape[1])])
+        #n_components = scree_plot(raw_embed)
+        #pca = PCA(n_components=n_components, random_state=42)
+        #reduced_embeddings = pca.fit_transform(raw_embed)
+        embeddings = pd.DataFrame(raw_embed,
+                                  columns=[f"{column_name}_dim_{i + 1}" for i in range(raw_embed.shape[1])])
         data = pd.concat([data.drop(column_name, axis=1), embeddings], axis=1)
         print(f"Finished concatenating {column_name}\n")
 
