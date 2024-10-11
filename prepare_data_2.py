@@ -28,6 +28,16 @@ def use_embeddings():
     
     return embeddings[0], embeddings[1]
 
+def calculate_reference_embedding(data, embedding_cols):
+    
+    filtered_data = data[data['hasHeadache'] == 1]
+
+    embeddings = filtered_data[embedding_cols].values
+
+    reference_embedding = embeddings.mean(axis=0)
+
+    return reference_embedding
+
 
 def transform_data(data):
     history_cols = [col for col in data.columns if col.startswith(f"HISTORY_dim")]
@@ -36,7 +46,8 @@ def transform_data(data):
     history_embeddings = data[history_cols].values
     allergies_embeddings = data[allergies_cols].values 
     
-    ref_history_embedding, ref_allergies_embedding = use_embeddings()
+    ref_history_embedding = calculate_reference_embedding(data, history_cols)
+    ref_allergies_embedding = calculate_reference_embedding(data, allergies_cols)
     
     history_distances = [diff_embeddings(emb, ref_history_embedding) for emb in history_embeddings]
     allergies_distances = [diff_embeddings(emb, ref_allergies_embedding) for emb in allergies_embeddings]
@@ -53,8 +64,8 @@ def transform_data(data):
 
 if __name__ == '__main__':
     
-    data = pd.read_csv('data_processed.csv')[:1000]
+    data = pd.read_csv('data_processed.csv')
     
     data = transform_data(data)
     
-    data.to_excel('data_processed_transformed.xlsx', index=False)
+    data.to_csv('data_processed_transformed.csv', index=False)
