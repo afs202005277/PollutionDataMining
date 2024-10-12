@@ -166,3 +166,4 @@ cython_debug/
 model_results.csv
 *.png
 *.csv
+*.txt
