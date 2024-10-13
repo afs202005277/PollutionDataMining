@@ -30,52 +30,50 @@ def evaluate_model(model, X_test, y_test):
     return accuracy, f1, recall, precision
 
 # Load dataset
-data = pd.read_csv('sample.csv')
 
-print('Dataset loaded.')
+def runRF(name, data):
 
-hasHeadache_col = data.pop('hasHeadache')
-data['hasHeadache'] = hasHeadache_col
+    print('Dataset loaded.')
 
-X = data.iloc[:, :-1].values
-y = data.iloc[:, -1].values
+    hasHeadache_col = data.pop('hasHeadache')
+    data['hasHeadache'] = hasHeadache_col
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-# Create K-Fold cross-validator
-kf = KFold(n_splits=5, shuffle=True, random_state=42)
+    X = data.iloc[:, :-1].values
+    y = data.iloc[:, -1].values
 
-# Dictionary to store results
-results = []
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    # Create K-Fold cross-validator
+    kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
-# 1. Random Forest Classifier (transparent)
-rf_param_grid = {
-    'n_estimators': [50, 100, 200],
-    'max_depth': [5, 7, 9],
-    'min_samples_split': [2, 5, 10]
-}
-rf = RandomForestClassifier(random_state=42)
-grid_rf = GridSearchCV(rf, rf_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
-grid_rf.fit(X_train, y_train)
-rf_best_params = grid_rf.best_params_
+    # Dictionary to store results
+    results = []
 
-#chart with the most important features
-importances = grid_rf.best_estimator_.feature_importances_
-indices = np.argsort(importances)[::-1]
-plt.figure(figsize=(20, 10))
-plt.title("Feature importances")
-plt.bar(range(X_train.shape[1]), importances[indices], align="center")
-plt.xticks(range(X_train.shape[1]), data.columns[:-1][indices], rotation=90)
-plt.xlim([-1, X_train.shape[1]])
-plt.savefig('feature_importances.png', format='png')
+    # 1. Random Forest Classifier (transparent)
+    rf_param_grid = {
+        'n_estimators': [1000],
+        'max_depth': [9],
+        'min_samples_split': [5]
+    }
+    rf = RandomForestClassifier(random_state=42)
+    grid_rf = GridSearchCV(rf, rf_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
+    grid_rf.fit(X_train, y_train)
+    rf_best_params = grid_rf.best_params_
 
-# Evaluate RF model
-rf_accuracy, rf_f1, rf_recall, rf_precision = evaluate_model(grid_rf, X_test, y_test)
-results.append(['Random Forest', rf_best_params, rf_accuracy, rf_f1, rf_recall, rf_precision])
+    #chart with the most important features
+    importances = grid_rf.best_estimator_.feature_importances_
+    indices = np.argsort(importances)[::-1]
+    plt.figure(figsize=(20, 10))
+    plt.title("Feature importances")
+    plt.bar(range(X_train.shape[1]), importances[indices], align="center")
+    plt.xticks(range(X_train.shape[1]), data.columns[:-1][indices], rotation=90)
+    plt.xlim([-1, X_train.shape[1]])
+    plt.savefig('feature_importances.png', format='png')
 
-print("Finished random forest")
+    # Evaluate RF model
+    rf_accuracy, rf_f1, rf_recall, rf_precision = evaluate_model(grid_rf, X_test, y_test)
 
-# Export results to CSV
-results_df = pd.DataFrame(results, columns=['Model', 'Best Params', 'Accuracy', 'F1-Score', 'Recall', 'Precision'])
-results_df.to_csv('model_results.csv', index=False)
 
-print("Results saved to 'model_results.csv'")
+    print(f"{name}: {rf_accuracy} accuracy")
+    print(f"{name}: {rf_recall} recall")
+    print(f"{name}: {rf_precision} precision")
+    print(f"{name}: {rf_f1} F1")
