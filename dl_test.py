@@ -33,7 +33,11 @@ for i, path in enumerate(paths):
         data = pd.read_csv(path + name)
 
         print('---------------------------------------------------')
+        print("Random Forest:")
         test.runRF(dl_names[i] + dll_names[j], data)
+        print('---------------------------------------------------')
+        print('Decision Tree:')
+        test.runDT(dl_names[i] + dll_names[j], data)
         print('---------------------------------------------------')
         '''divide_point = int(0.7*len(data))
 
