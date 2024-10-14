@@ -117,3 +117,50 @@ def runDT(name, data):
         print(f"{name}: {dt_f1} F1")
     except Exception as e:
         print(e)
+
+def run_rf_dropping_attributes(name, data):
+    try:
+        print('Dataset loaded.')
+
+        hasHeadache_col = data.pop('hasHeadache')
+        data['hasHeadache'] = hasHeadache_col
+
+        X = data.iloc[:, :-1].values
+        y = data.iloc[:, -1].values
+        # Create K-Fold cross-validator
+        kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+        # Dictionary to store results
+        results = []
+
+        # 1. Random Forest Classifier (transparent)
+        rf_param_grid = {
+            'n_estimators': [1000],
+            'max_depth': [9, None],
+            'min_samples_split': [10],
+            'min_samples_leaf': [2],
+            'max_features': ['sqrt']
+        }
+        for attribute in X.columns:
+            # Create a new dataset by dropping one attribute
+            X_dropped = X.drop(columns=[attribute])
+
+            # Split the modified dataset
+            X_train_dropped, X_test_dropped, y_train, y_test = train_test_split(X_dropped, y, test_size=0.3,
+                                                                                random_state=42)
+
+            # Random Forest Classifier
+            rf = RandomForestClassifier(random_state=42)
+            grid_rf = GridSearchCV(rf, rf_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
+            grid_rf.fit(X_train_dropped, y_train)
+
+            # Evaluate the model with the dropped attribute
+            rf_accuracy, rf_f1, rf_recall, rf_precision = evaluate_model(grid_rf, X_test_dropped, y_test)
+
+            # Print the results for the dropped attribute
+            print(f"{name} (dropped {attribute}): {rf_accuracy} accuracy")
+            print(f"{name} (dropped {attribute}): {rf_recall} recall")
+            print(f"{name} (dropped {attribute}): {rf_precision} precision")
+            print(f"{name} (dropped {attribute}): {rf_f1} F1")
+    except Exception as e:
+        print(e)
