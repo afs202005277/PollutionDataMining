@@ -2,6 +2,7 @@ import dl
 import test
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import c45
 
 def standard_dataset(df):
     # Step 1: Separate features and target variable
@@ -33,12 +34,21 @@ for i, path in enumerate(paths):
         data = pd.read_csv(path + name)
 
         print('---------------------------------------------------')
+        print("C4.5:")
+        c45.runC45(dl_names[i] + dll_names[j], data)
+        print('---------------------------------------------------')
+
+
+        """
+        print('---------------------------------------------------')
         print("Random Forest:")
         test.runRF(dl_names[i] + dll_names[j], data)
         print('---------------------------------------------------')
         print('Decision Tree:')
         test.runDT(dl_names[i] + dll_names[j], data)
         print('---------------------------------------------------')
+        """
+
         '''divide_point = int(0.7*len(data))
 
         data_train = data[:divide_point]
