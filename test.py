@@ -49,9 +49,11 @@ def runRF(name, data):
 
         # 1. Random Forest Classifier (transparent)
         rf_param_grid = {
-            'n_estimators': [1000],
-            'max_depth': [9],
-            'min_samples_split': [5]
+            'n_estimators': [500, 1000],  # Two values, balancing performance and training time
+            'max_depth': [9, 15, None],  # Includes a constrained value, a mid-range, and unlimited depth
+            'min_samples_split': [5, 10],  # Slightly higher values to prevent overfitting on large data
+            'min_samples_leaf': [1, 2],  # Regularizing by ensuring a minimum number of samples in leaves
+            'max_features': ['auto', 'sqrt']  # Two commonly used options, balancing speed and accuracy
         }
         rf = RandomForestClassifier(random_state=42)
         grid_rf = GridSearchCV(rf, rf_param_grid, cv=kf, scoring='accuracy', n_jobs=-1)
