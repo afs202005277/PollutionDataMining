@@ -1,10 +1,5 @@
-import numpy as np
-import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from sklearn.preprocessing import StandardScaler
-
 import dl
 
 
@@ -13,9 +8,7 @@ def get_rf(X_train, y_train):
     rf = RandomForestClassifier(
         n_estimators=1000,
         max_depth=9,
-        min_samples_split=10,
-        min_samples_leaf=2,
-        max_features='sqrt',
+        min_samples_split=5,
         random_state=42
     )
 
